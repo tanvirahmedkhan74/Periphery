@@ -1,14 +1,15 @@
-# Peekaboov2.0
+# UKAN MINI
 ### Knowledge Distillation with the Peekaboo Model for Unsupervised Object Localization
 **North South University**
 #### Tanvir Ahmed Khan, Moshiur Rahman, Shahariar Ifti, Tasin Tayeba Khan
 Based on the work of - Hasib Zunair, A. Ben Hamza
 -
 
-[[`Paper`](https://arxiv.org/abs/2407.17628)] [[`Project`](https://hasibzunair.github.io/peekaboo/)] [[`Demo`](#4-demo)] [[`BibTeX`](#5-citation)]
+[//]: # ([[`Paper`]&#40;https://arxiv.org/abs/2407.17628&#41;] [[`Project`]&#40;https://hasibzunair.github.io/peekaboo/&#41;] [[`Demo`]&#40;#4-demo&#41;] [[`BibTeX`]&#40;#5-citation&#41;])
 
-This is official code for our **BMVC 2024 paper**:<br>
-[PEEKABOO: Hiding Parts of an Image for Unsupervised Object Localization](https://arxiv.org/abs/2407.17628)
+[//]: # (This is official code for our **BMVC 2024 paper**:<br>)
+
+[//]: # ([PEEKABOO: Hiding Parts of an Image for Unsupervised Object Localization]&#40;https://arxiv.org/abs/2407.17628&#41;)
 <br>
 
 ![MSL Design](./media/figure.jpg)
@@ -19,12 +20,12 @@ A segmentation model with zero-shot generalization to unfamiliar images and obje
 
 ## 1. Specification of dependencies
 
-This code requires Python 3.8 and CUDA 11.2. Clone the project repository, then create and activate the following conda envrionment.
+This code requires Python 3.12.7 and CUDA 12.4. Clone the project repository, then create and activate the following conda envrionment.
 
 ```bash
 # clone repo
-git clone https://github.com/hasibzunair/peekaboo
-cd peekaboo
+git clone https://github.com/tanvirahmedkhan74/ukan_mini.git
+cd ukan_mini
 # create env
 conda update conda
 conda env create -f environment.yml
@@ -35,16 +36,14 @@ Or, you can also create a fresh environment and install the project requirements
 
 ```bash
 # clone repo
-git clone https://github.com/hasibzunair/peekaboo
-cd peekaboo
+git clone https://github.com/tanvirahmedkhan74/ukan_mini.git
+cd ukan_mini
 # create fresh env
 conda create -n peekaboo python=3.8     
 conda activate peekaboo
-# example of pytorch installation
-pip install torch===1.8.1 torchvision==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
-pip install pycocotools
 # install dependencies
-pip install -r requirements.txt
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip install pycocotools matplotlib numpy opencv-python opencv-python-headless scipy tqdm Pillow scikit-image scikit-learn pytest torchinfo pyyaml tensorboard
 ```
 
 ## 2a. Training code
@@ -75,20 +74,13 @@ For single object discovery, we follow the framework used in [LOST](https://gith
 
 Finally, download the masks of random streaks and holes of arbitrary shapes from [SCRIBBLES.zip](https://github.com/hasibzunair/masksup-segmentation/releases/download/v1.0/SCRIBBLES.zip) and put it inside `datasets` folder.
 
-### DUTS-TR training
+### DUTS-TR distillation training
 
 ```bash
-export DATASET_DIR=datasets_local # root directory training and evaluation datasets
-
-python train.py --exp-name peekaboo --dataset-dir $DATASET_DIR
+python train.py --exp-name ukan_mini --dataset-dir ./datasets_local --distillation
 ```
 
-### DUTS-TR distillation
-```bash
-python train.py --exp-name peekaboo --dataset-dir ./datasets_local --distillation
-```
-
-See logs in `outputs/peekaboo-DUTS-TR-vit_small8` folder and also see tensorboard logs by running: `tensorboard --logdir=outputs`.
+See logs in `outputs/ukan_mini-DUTS-TR-vit_small8` folder and also see tensorboard logs by running: `tensorboard --logdir=outputs`.
 
 ## 2b. Evaluation code
 
@@ -102,10 +94,7 @@ export MODEL="outputs/peekaboo-DUTS-TR-vit_small8/decoder_weights_niter500.pt"
 
 ```bash
 # run evaluation
-source evaluate_saliency.sh $MODEL $DATASET_DIR single
-source evaluate_saliency.sh $MODEL $DATASET_DIR multi
-
-source .\evaluate_student_saliency.sh .\outputs\peekaboo-DUTS-TR-vit_small8\student_model_final.pth .\datasets_local\ single
+source evaluate_saliency.sh
 ```
 
 ### Single object discovery eval
