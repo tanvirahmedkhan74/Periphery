@@ -1,0 +1,15 @@
+# switched to python=3.12.7
+ pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+ pip install pycocotools matplotlib numpy opencv-python opencv-python-headless scipy tqdm Pillow scikit-image scikit-learn pytest torchinfo
+ pip install pyyaml
+ pip install tensorboard
+
+ pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124 pycocotools matplotlib numpy opencv-python opencv-python-headless scipy tqdm Pillow scikit-image scikit-learn pytest torchinfo pyyaml tensorboard
+
+
+ # change the dir im_name = img_path.split("\\")[-1] for windows in dataset.py
+ # cg() takes rtol instead of tol
+
+ # for seg_ukan
+
+ - pip install timm albumentations tensorboardX medpy
