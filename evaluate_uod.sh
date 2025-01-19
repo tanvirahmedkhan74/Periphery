@@ -1,5 +1,5 @@
-MODEL=$1
-DATASET_DIR=$2
+MODEL="data/checkpoints/best_student_model_DUTS50.pth"
+DATASET_DIR="datasets_local"
 
 # Single object discovery evaluation
 for DATASET in VOC07 VOC12 COCO20k

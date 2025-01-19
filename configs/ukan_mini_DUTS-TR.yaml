@@ -7,25 +7,9 @@ model:
 peekaboo:
   feats: "k"
 
-UKAN_Config:
-  num_classes: 1                  # Number of output classes
-  input_channels: 3               # Input channels (consider reducing to 1 if feasible)
-  in_chans: 3                     # Input channels (consider reducing to 1 if feasible)
-  deep_supervision: False
-  img_size: 224                  # Reduced input size
-  patch_size: 8
-  embed_dims: [128, 160, 256]      # Smaller embedding dimensions
-  no_kan: False                   # Disable KAN blocks if possible
-  drop_rate: 0.1                  # Add some dropout for regularization
-  drop_path_rate: 0.1
-  norm_layer: nn.LayerNorm
-  depths: [1, 1, 1]                  # Reduced depth
-  patch_embed_type: 'linear'      # Simpler patch embedding method
-  checkpoint_path: "data/checkpoints/best_student_model.pth"
-
 # Training Configuration
 training:
-  dataset: DUTS-TR
+  dataset: DUT-OMRON
   dataset_set: null
 
   # Hyper parameters
@@ -45,16 +29,38 @@ training:
   cropping_strategy: random_scale
   teacher_weights_path: "data/weights/peekaboo_decoder_weights_niter500.pt"  # Path to teacher weights
 
+  # Evaluation Configuration
+evaluation:
+  type: saliency
+  datasets: [ DUT-OMRON, ECSSD ]
+  freq: 50
+
+UKAN_Config:
+  num_classes: 1                  # Number of output classes
+  input_channels: 3               # Input channels (consider reducing to 1 if feasible)
+  in_chans: 3                     # Input channels (consider reducing to 1 if feasible)
+  deep_supervision: False
+  img_size: 224                  # Reduced input size
+  patch_size: 8
+  embed_dims: [128, 160, 256]      # Smaller embedding dimensions
+  no_kan: False                   # Disable KAN blocks if possible
+  drop_rate: 0.1                  # Add some dropout for regularization
+  drop_path_rate: 0.1
+  norm_layer: nn.LayerNorm
+  depths: [1, 1, 1]                  # Reduced depth
+  patch_embed_type: 'linear'      # Simpler patch embedding method
+  checkpoint_path: "data/checkpoints/best_student_model.pth"
+
 # Distillation-specific hyperparameters
 distillation:
-  checkpoint_path: "data/checkpoints/best_student_model.pth"
-  alpha: 0.5               # Weight for distillation loss
-  beta: 0.2
+  checkpoint_path: "data/checkpoints/best_student_model_DUTS50.pth"
+  alpha: 0.7               # Weight for distillation loss
+  beta: 0.3
   gamma: 0.2
   temperature: 2.0         # Temperature for softening teacher output
   batch_size: 16
-  learning_rate: 1e-4      # Unified learning rate for distillation
-  epochs: 75             # Total number of epochs for distillation
+  learning_rate: 2e-4      # Unified learning rate for distillation
+  epochs: 50             # Total number of epochs for distillation
   patience: 5             # Patience for early stopping
   validation_interval: 100   # Perform validation every 5 epochs
   visualization_interval: 3  # Save visualizations every 10 epochs
@@ -62,10 +68,3 @@ distillation:
   phase_1_learning_rate: 1e-4  # Learning rate for Phase 1
   phase_2_epochs: 5       # Epochs for Phase 2 training
   phase_2_learning_rate: 5e-5  # Learning rate for Phase 2
-
-
-# Evaluation Configuration
-evaluation:
-  type: saliency
-  datasets: [DUT-OMRON, ECSSD]
-  freq: 50

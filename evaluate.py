@@ -1,5 +1,6 @@
 import argparse
 import torch
+import torch.nn as nn
 from periphery import Periphery
 from misc import load_config
 from datasets.datasets import build_dataset
@@ -82,7 +83,7 @@ if __name__ == "__main__":
 
     # Load the weights from the specified checkpoint path
     model.load_state_dict(checkpoint)
-    print(f'In Eval Student Model Weight Loaded From {config.distillation["checkpoint_path"]} Successfully')
+    print(f'In UOD Eval Student Model Weight Loaded From {config.distillation["checkpoint_path"]} Successfully')
 
     # Build the validation dataset
     val_dataset = build_dataset(

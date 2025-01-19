@@ -16,7 +16,6 @@ from evaluation.metrics.pixel_acc import compute_pixel_accuracy
 
 from distillation.loss_functions.CombinedDistillationLoss import CombinedDistillationLoss
 
-
 def periphery_distillation_training(teacher_model, student_model, trainloader, config, valloader=None):
     """
     Trains the student model using knowledge distillation from a teacher model
@@ -35,8 +34,8 @@ def periphery_distillation_training(teacher_model, student_model, trainloader, c
     student_model.to(device).train()
 
     # Initialize loss function and optimizer
-    criterion = CombinedDistillationLoss(alpha=config.get("alpha", 0.5),
-                                        beta=config.get("beta", 0.5))
+    criterion = CombinedDistillationLoss(alpha=config.get("alpha", 0.7),
+                                        beta=config.get("beta", 0.3))
     optimizer = torch.optim.AdamW(student_model.parameters(), lr=config["learning_rate"])
 
     # Learning Rate Scheduler with Warm-Up and Cosine Annealing
@@ -75,6 +74,7 @@ def periphery_distillation_training(teacher_model, student_model, trainloader, c
             # batch[0]: inputs
             # batch[5]: ground truth saliency maps
             inputs, gt_labels = batch[0].to(device), batch[5].to(device).float()
+            scribbles = batch[2].to(device)
 
             # Forward pass through the teacher model
             with torch.no_grad():
@@ -94,8 +94,8 @@ def periphery_distillation_training(teacher_model, student_model, trainloader, c
             student_probs = torch.sigmoid(student_logits_upsampled)
             student_binary = (student_probs > 0.5).float()
 
-            iou = compute_iou(student_binary, gt_labels.unsqueeze(1))  # Assuming compute_iou is defined
-            pixel_acc = compute_pixel_accuracy(student_binary, gt_labels.unsqueeze(1))  # Assuming compute_pixel_accuracy is defined
+            iou = compute_iou(student_binary, gt_labels.unsqueeze(1))
+            pixel_acc = compute_pixel_accuracy(student_binary, gt_labels.unsqueeze(1))
 
             # Update running metrics
             running_loss += loss.item()

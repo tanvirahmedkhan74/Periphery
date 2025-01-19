@@ -88,7 +88,6 @@ class PeekabooModel(nn.Module):
         if decoder is None:
             decoder = self.decoder
 
-        # print(feats.shape)
         logits = decoder(feats)
         return logits
 

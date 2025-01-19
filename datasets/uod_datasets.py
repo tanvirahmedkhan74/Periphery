@@ -109,7 +109,7 @@ class UODDataset:
                 year=self.year,
                 image_set=self.set,
                 transform=transform,
-                download=False,
+                download=True,
             )
         elif "COCO20k" == dataset_name:
             self.dataloader = torchvision.datasets.CocoDetection(

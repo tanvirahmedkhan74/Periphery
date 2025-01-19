@@ -14,6 +14,7 @@
 
 """
 Code adapted from previous method LOST: https://github.com/valeoai/LOST
+Code adapted from previous method Peekaboo: https://github.com/hasibzunair/peekaboo
 """
 
 import os
@@ -21,22 +22,26 @@ import time
 import torch
 import torch.nn as nn
 import numpy as np
+import torchvision.transforms as transforms
+import torch.nn.functional as F
 
 from tqdm import tqdm
 from misc import bbox_iou, get_bbox_from_segmentation_labels
 
 
 def evaluation_unsupervised_object_discovery(
-    dataset,
-    model,
-    evaluation_mode: str = "single",  # choices are ["single", "multi"]
-    output_dir: str = "outputs",
-    no_hards: bool = False,
+        dataset,
+        model,
+        evaluation_mode: str = "single",  # choices are ["single", "multi"]
+        output_dir: str = "outputs",
+        no_hards: bool = False,
 ):
-
     assert evaluation_mode == "single"
 
     sigmoid = nn.Sigmoid()
+
+    # Define input size for resizing
+    input_size = (224, 224)
 
     # ----------------------------------------------------
     # Loop over images
@@ -59,22 +64,12 @@ def evaluation_unsupervised_object_discovery(
         if im_name is None:
             continue
 
-        # Padding the image with zeros to fit multiple of patch-size
-        size_im = (
-            img.shape[0],
-            int(np.ceil(img.shape[1] / model.vit_patch_size) * model.vit_patch_size),
-            int(np.ceil(img.shape[2] / model.vit_patch_size) * model.vit_patch_size),
-        )
-        paded = torch.zeros(size_im)
-        paded[:, : img.shape[1], : img.shape[2]] = img
-        img = paded
+        # Resize the image to the model input size
+        resize_transform = transforms.Resize(input_size)
+        img_resized = resize_transform(img)
 
         # # Move to gpu
-        img = img.cuda(non_blocking=True)
-
-        # Size for transformers
-        # w_featmap = img.shape[-2] // model.vit_patch_size
-        # h_featmap = img.shape[-1] // model.vit_patch_size
+        img_resized = img_resized.cuda(non_blocking=True)
 
         # ------------ GROUND-TRUTH -------------------------------------------
         gt_bbxs, gt_cls = dataset.extract_gt(inp[1], im_name)
@@ -85,15 +80,24 @@ def evaluation_unsupervised_object_discovery(
             if gt_bbxs.shape[0] == 0 and no_hards:
                 continue
 
-        outputs = model(img[None, :, :, :])
+        outputs = model(img_resized[None, :, :, :])  # Pass resized image into student model
         preds = (sigmoid(outputs[0].detach()) > 0.5).float().squeeze().cpu().numpy()
+
+        # Interpolate preds to match init_image_size for correct bbox calculation
+        if preds.shape != init_image_size[1:]:
+            preds_tensor = torch.from_numpy(preds).unsqueeze(0).unsqueeze(0).float().cuda()
+            preds_interpolated = F.interpolate(preds_tensor, size=init_image_size[1:], mode="bilinear",
+                                              align_corners=False).squeeze(0).squeeze(0).cpu().numpy()
+            preds = preds_interpolated
 
         # get bbox
         pred = get_bbox_from_segmentation_labels(
             segmenter_predictions=preds,
-            scales=[model.vit_patch_size, model.vit_patch_size],
+            scales=[1,1], # we already upsampled our segmentation map
             initial_image_size=init_image_size[1:],
         )
+
+
 
         # ------------ Visualizations -------------------------------------------
         # Save the prediction
@@ -107,11 +111,11 @@ def evaluation_unsupervised_object_discovery(
 
         cnt += 1
         if cnt % 50 == 0:
-            pbar.set_description(f"Peekaboo {int(np.sum(corloc))}/{cnt}")
+            pbar.set_description(f"Periphery {int(np.sum(corloc))}/{cnt}")
 
     # Evaluate
-    print(f"corloc: {100*np.sum(corloc)/cnt:.2f} ({int(np.sum(corloc))}/{cnt})")
-    result_file = os.path.join(output_dir, "uod_results.txt")
+    print(f"corloc: {100 * np.sum(corloc) / cnt:.2f} ({int(np.sum(corloc))}/{cnt})")
+    result_file = os.path.join(output_dir, "uod_results_student.txt")
     with open(result_file, "w") as f:
         f.write("corloc,%.1f,,\n" % (100 * np.sum(corloc) / cnt))
     print("File saved at %s" % result_file)
